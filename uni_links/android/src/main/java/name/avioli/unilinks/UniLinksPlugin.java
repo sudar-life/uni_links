@@ -42,7 +42,9 @@ public class UniLinksPlugin
                 initialIntent = false;
             }
             latestLink = dataString;
-            if (changeReceiver != null) changeReceiver.onReceive(context, intent);
+            if (changeReceiver != null)
+                changeReceiver.onReceive(context, intent);
+            intent.setData(null);
         }
     }
 
@@ -61,6 +63,7 @@ public class UniLinksPlugin
                     events.error("UNAVAILABLE", "Link unavailable", null);
                 } else {
                     events.success(dataString);
+                    initialLink = "stream:action";
                 }
             }
         };
@@ -111,9 +114,15 @@ public class UniLinksPlugin
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
         if (call.method.equals("getInitialLink")) {
-            result.success(initialLink);
+            if (initialLink.equals("stream:action")) {
+                initialLink = "";
+            } else {
+                result.success(initialLink);
+                initialLink = "";
+            }
         } else if (call.method.equals("getLatestLink")) {
             result.success(latestLink);
+            latestLink = "";
         } else {
             result.notImplemented();
         }
@@ -129,6 +138,7 @@ public class UniLinksPlugin
     public void onAttachedToActivity(@NonNull ActivityPluginBinding activityPluginBinding) {
         activityPluginBinding.addOnNewIntentListener(this);
         this.handleIntent(this.context, activityPluginBinding.getActivity().getIntent());
+        activityPluginBinding.getActivity().getIntent().setData(null);
     }
 
     @Override
